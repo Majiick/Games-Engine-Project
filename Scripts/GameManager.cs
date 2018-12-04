@@ -18,13 +18,15 @@ public class GameManager : MonoBehaviour {
 
     private List<IColored> _coloreds = new List<IColored>();
     private List<IRegeneratable> _regeneratables = new List<IRegeneratable>();
+    private Grid _grid;
 
     // Use this for initialization
     void Start () {
 		//Villager.Create();
+        _grid = GameObject.FindObjectOfType<Grid>();
 
-	    for (int i = 0; i < 10; i++) {
-	        Tree.Create(new Vector3(i * 5, 0, 0));
+        for (int i = 0; i < 10; i++) {
+	        Tree.Create(_grid.CellToWorld(new Vector3Int(i, 0, i)));
         }
 	}
 	
