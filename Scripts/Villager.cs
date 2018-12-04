@@ -34,7 +34,6 @@ public class Villager : MonoBehaviour, IColored {
         _leftLeg.transform.localPosition = new Vector3(0f, -0.25f, -0.5f);
 	    _rightLeg.transform.localPosition = new Vector3(0f, -0.25f, 0.5f);
 
-        GameManager.Instance.RegisterColored(this);
         ColorIn();
     }
 
@@ -47,5 +46,6 @@ public class Villager : MonoBehaviour, IColored {
         GameObject newVillager = new GameObject();
         newVillager.transform.name = "Villager";
         newVillager.AddComponent<Villager>();
+        GameManager.Instance.RegisterColored(newVillager.GetComponent<Villager>());
     }
 }
