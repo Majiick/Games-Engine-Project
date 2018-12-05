@@ -30,26 +30,49 @@ public class TerrainGenerator : MonoBehaviour, IRegeneratable {
         t.terrainData.size = new Vector3(width, height, length);
         t.terrainData.heightmapResolution = width;
 
+        const int octaveAmount = 6;
+        const float octaveScaleMultiplier = 4f;
+        const float amplitudeMultiplier = 0.3f;
+
+
+        List<float[,]> octaves = new List<float[,]>();
+        float amplitude = 1f;
+        float scale = 1f;
+        for (int i = 0; i < octaveAmount; i++) {
+            octaves.Add(new float[width,length]);
+
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < length; y++) {
+                    octaves[i][x, y] = Mathf.PerlinNoise(((float)x + _offsetx) / width * _scale * scale, ((float)y + _offsety) / length * _scale * scale) * amplitude;
+                }
+            }
+
+            amplitude = amplitude * amplitudeMultiplier;
+            scale = scale * octaveScaleMultiplier;
+        }
+
         // Generate the heights
-        float[,] heights = new float[width, length];
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < length; y++) {
-                heights[x, y] = Mathf.PerlinNoise(((float)x + _offsetx) / width * _scale, ((float)y + _offsety) / length * _scale);
+        float[,] heights =  new float[width,length];
+        foreach (var octave in octaves) {
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < length; y++) {
+                    heights[x, y] += octave[x, y];
+                }
             }
         }
+        
         
 
         // Clamp the heights
         Texture2D texture = new Texture2D(width, length);
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < length; y++) {
-                if (heights[x, y] < 0.3f) {  // Water
+                if (heights[x, y] < 0.35f) {  // Water
                     texture.SetPixel(y, x, Color.blue);
                     heights[x, y] = 0.3f;
                 }
                 else if (heights[x, y] >= 0.8) {  // Mountain
                     texture.SetPixel(y, x, Color.gray);
-                    heights[x, y] = 1f;
                 }
                 else {  // Land
                     texture.SetPixel(y, x, Color.green);
@@ -62,14 +85,14 @@ public class TerrainGenerator : MonoBehaviour, IRegeneratable {
                         newHeight = 0.55f + newHeight;
                     }
 
-                    heights[x, y] = newHeight;
+//                    heights[x, y] = newHeight;
                 }
             }
         }
 
-        for (int i = 0; i < 2; i++) {
-            heights = SmoothOutTransitions(heights);
-        }
+//        for (int i = 0; i < 2; i++) {
+//            heights = SmoothOutTransitions(heights);
+//        }
 
 
         SplatPrototype splat = new SplatPrototype();
