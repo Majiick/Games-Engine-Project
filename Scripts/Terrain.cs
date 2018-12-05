@@ -3,11 +3,25 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 
-public class TerrainGenerator : MonoBehaviour, IRegeneratable {
-    int length = 128;
-    int width = 128;
-    int height = 10;
+public class Terrain : MonoBehaviour, IRegeneratable {
+    #region SINGLETON PATTERN
+    public static Terrain _instance;
+    public static Terrain Instance {
+        get {
+            if (_instance == null) {
+                _instance = GameObject.FindObjectOfType<Terrain>();
+            }
 
+            return _instance;
+        }
+    }
+    #endregion
+
+    public enum TerrainType { Land, Water, Mountain };
+    public float[,] TerrainHeights;
+    public TerrainType[,] TerrainTypes;
+
+    private int _height = 10;
     private float _scale = 5f;
     private float _offsetx = 0f;
     private float _offsety = 0f;
@@ -15,7 +29,6 @@ public class TerrainGenerator : MonoBehaviour, IRegeneratable {
 	// Use this for initialization
 	void Start() {
         GameManager.Instance.RegisterRegeneratable(this);
-	    Regenerate();
 	}
 
     void Update() {
@@ -23,11 +36,14 @@ public class TerrainGenerator : MonoBehaviour, IRegeneratable {
     }
 
     public void Regenerate() {
+        int width = GameManager.WIDTH;
+        int length = GameManager.LENGTH;
+
         _offsetx = Random.Range(0, 1000000f);
         _offsety = Random.Range(0, 1000000f);
 
-        Terrain t = GetComponent<Terrain>();
-        t.terrainData.size = new Vector3(width, height, length);
+        UnityEngine.Terrain t = GetComponent<UnityEngine.Terrain>();
+        t.terrainData.size = new Vector3(width, _height, length);
         t.terrainData.heightmapResolution = width;
 
         const int octaveAmount = 6;
@@ -52,28 +68,29 @@ public class TerrainGenerator : MonoBehaviour, IRegeneratable {
         }
 
         // Generate the heights
-        float[,] heights =  new float[width,length];
+        TerrainHeights =  new float[width,length];
         foreach (var octave in octaves) {
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < length; y++) {
-                    heights[x, y] += octave[x, y];
+                    TerrainHeights[x, y] += octave[x, y];
                 }
             }
         }
-        
-        
 
+        TerrainTypes = new TerrainType[width,length];
         // Clamp the heights
         Texture2D texture = new Texture2D(width, length);
         bool[,] land = new bool[width, length];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < length; y++) {
-                if (heights[x, y] < 0.35f) {  // Water
+                if (TerrainHeights[x, y] < 0.35f) {  // Water
                     texture.SetPixel(y, x, Color.blue);
-                    heights[x, y] = 0.3f;
+                    TerrainHeights[x, y] = 0.3f;
+                    TerrainTypes[x, y] = TerrainType.Water;
                 }
-                else if (heights[x, y] >= 0.8) {  // Mountain
+                else if (TerrainHeights[x, y] >= 0.8) {  // Mountain
                     texture.SetPixel(y, x, Color.gray);
+                    TerrainTypes[x, y] = TerrainType.Mountain;
                 }
                 else {  // Land
                     if (x % 2 == 0) {
@@ -84,12 +101,14 @@ public class TerrainGenerator : MonoBehaviour, IRegeneratable {
                     }
 
                     land[x, y] = true;
+                    TerrainTypes[x, y] = TerrainType.Land;
                 }
             }
         }
 
+        // Smooth out the land a bit.
         for (int i = 0; i < 1; i++) {
-            heights = SmoothOutTransitions(heights, land);
+            TerrainHeights = SmoothOutTransitions(TerrainHeights, land);
         }
 
 
@@ -100,7 +119,7 @@ public class TerrainGenerator : MonoBehaviour, IRegeneratable {
         splat.texture.Apply(true);
         t.terrainData.splatPrototypes = new SplatPrototype[] { splat };
         
-        t.terrainData.SetHeights(0, 0, heights);
+        t.terrainData.SetHeights(0, 0, TerrainHeights);
     }
 
     float[,] SmoothOutTransitions(float[,] heights, bool[,] mask=null) {

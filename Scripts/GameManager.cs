@@ -16,6 +16,10 @@ public class GameManager : MonoBehaviour {
     }
     #endregion
 
+    public static readonly int LENGTH = 128;
+    public static readonly int WIDTH = 128;
+
+
     private List<IColored> _coloreds = new List<IColored>();
     private List<IRegeneratable> _regeneratables = new List<IRegeneratable>();
     private Grid _grid;
@@ -25,8 +29,17 @@ public class GameManager : MonoBehaviour {
 		//Villager.Create();
         _grid = GameObject.FindObjectOfType<Grid>();
 
-        for (int i = 0; i < 10; i++) {
-	        Tree.Create(_grid.CellToWorld(new Vector3Int(i, 0, i)));
+        Terrain.Instance.Regenerate();
+
+        for (int x = 0; x < WIDTH; x++) {
+            for (int y = 0; y < LENGTH; y++) {
+                if (Terrain.Instance.TerrainTypes[x, y] == Terrain.TerrainType.Land) {
+                    if (Random.Range(0f, 100f) > 99f) {
+                        // TODO GET HEIGHT
+                        Tree.Create(_grid.CellToWorld(new Vector3Int(x, 0, y)));
+                    }
+                }
+            }
         }
 	}
 	
