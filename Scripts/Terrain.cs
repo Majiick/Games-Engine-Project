@@ -18,8 +18,8 @@ public class Terrain : MonoBehaviour, IRegeneratable {
     #endregion
 
     public enum TerrainType { Land, Water, Mountain };
-    public float[,] TerrainHeights;
-    public TerrainType[,] TerrainTypes;
+    private float[,] _terrainHeights;
+    private TerrainType[,] _terrainTypes;
 
     private int _height = 10;
     private float _scale = 5f;
@@ -68,29 +68,29 @@ public class Terrain : MonoBehaviour, IRegeneratable {
         }
 
         // Generate the heights
-        TerrainHeights =  new float[width,length];
+        _terrainHeights =  new float[width,length];
         foreach (var octave in octaves) {
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < length; y++) {
-                    TerrainHeights[x, y] += octave[x, y];
+                    _terrainHeights[x, y] += octave[x, y];
                 }
             }
         }
 
-        TerrainTypes = new TerrainType[width,length];
+        _terrainTypes = new TerrainType[width,length];
         // Clamp the heights
         Texture2D texture = new Texture2D(width, length);
         bool[,] land = new bool[width, length];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < length; y++) {
-                if (TerrainHeights[x, y] < 0.35f) {  // Water
+                if (_terrainHeights[x, y] < 0.35f) {  // Water
                     texture.SetPixel(y, x, Color.blue);
-                    TerrainHeights[x, y] = 0.3f;
-                    TerrainTypes[x, y] = TerrainType.Water;
+                    _terrainHeights[x, y] = 0.3f;
+                    _terrainTypes[x, y] = TerrainType.Water;
                 }
-                else if (TerrainHeights[x, y] >= 0.8) {  // Mountain
+                else if (_terrainHeights[x, y] >= 0.8) {  // Mountain
                     texture.SetPixel(y, x, Color.gray);
-                    TerrainTypes[x, y] = TerrainType.Mountain;
+                    _terrainTypes[x, y] = TerrainType.Mountain;
                 }
                 else {  // Land
                     if (x % 2 == 0) {
@@ -101,14 +101,14 @@ public class Terrain : MonoBehaviour, IRegeneratable {
                     }
 
                     land[x, y] = true;
-                    TerrainTypes[x, y] = TerrainType.Land;
+                    _terrainTypes[x, y] = TerrainType.Land;
                 }
             }
         }
 
         // Smooth out the land a bit.
         for (int i = 0; i < 1; i++) {
-            TerrainHeights = SmoothOutTransitions(TerrainHeights, land);
+            _terrainHeights = SmoothOutTransitions(_terrainHeights, land);
         }
 
 
@@ -119,7 +119,7 @@ public class Terrain : MonoBehaviour, IRegeneratable {
         splat.texture.Apply(true);
         t.terrainData.splatPrototypes = new SplatPrototype[] { splat };
         
-        t.terrainData.SetHeights(0, 0, TerrainHeights);
+        t.terrainData.SetHeights(0, 0, _terrainHeights);
     }
 
     float[,] SmoothOutTransitions(float[,] heights, bool[,] mask=null) {
@@ -148,5 +148,18 @@ public class Terrain : MonoBehaviour, IRegeneratable {
         }
 
         return newHeights;
+    }
+
+    public TerrainType GetTerrainType(Vector2Int pos) {
+        return _terrainTypes[pos.x, pos.y];
+    }
+
+    public float GetWorldHeight(Vector3 pos) {
+        UnityEngine.Terrain t = GetComponent<UnityEngine.Terrain>();
+        return t.SampleHeight(pos);
+    }
+
+    public float GetHeight(Vector2Int pos) {
+        return _terrainHeights[pos.x, pos.y];
     }
 }

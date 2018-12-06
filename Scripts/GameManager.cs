@@ -33,10 +33,9 @@ public class GameManager : MonoBehaviour {
 
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < LENGTH; y++) {
-                if (Terrain.Instance.TerrainTypes[x, y] == Terrain.TerrainType.Land) {
+                if (Terrain.Instance.GetTerrainType(new Vector2Int(x, y)) == Terrain.TerrainType.Land) {
                     if (Random.Range(0f, 100f) > 99f) {
-                        // TODO GET HEIGHT
-                        Tree.Create(_grid.CellToWorld(new Vector3Int(x, 0, y)));
+                        Tree.Create(_grid.CellToWorld(new Vector3Int(x, 0, y)) + Vector3.up * Terrain.Instance.GetWorldHeight(new Vector3(x, 0, y)));
                     }
                 }
             }
