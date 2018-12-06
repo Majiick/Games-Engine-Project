@@ -162,4 +162,14 @@ public class Terrain : MonoBehaviour, IRegeneratable {
     public float GetHeight(Vector2Int pos) {
         return _terrainHeights[pos.x, pos.y];
     }
+
+    public List<Vector3Int> GetAdjacentSquares(Vector3Int pos) {
+        List<Vector3Int> ret = new List<Vector3Int>();
+        ret.Add(pos + Vector3Int.down);
+        ret.Add(pos + Vector3Int.up);
+        ret.Add(pos + Vector3Int.right);
+        ret.Add(pos + Vector3Int.left);
+
+        return ret;
+    }
 }

@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour {
     #region SINGLETON PATTERN
@@ -31,16 +33,15 @@ public class GameManager : MonoBehaviour {
 
         Terrain.Instance.Regenerate();
 
-        for (int x = 0; x < WIDTH; x++) {
-            for (int y = 0; y < LENGTH; y++) {
-                if (Terrain.Instance.GetTerrainType(new Vector2Int(x, y)) == Terrain.TerrainType.Land) {
-                    if (Random.Range(0f, 100f) > 99f) {
-                        Tree.Create(_grid.CellToWorld(new Vector3Int(x, 0, y)) + Vector3.up * Terrain.Instance.GetWorldHeight(new Vector3(x, 0, y)));
-                    }
-                }
-            }
+        Invoke("tst", 3.0f);
+    }
+
+    void tst() {
+        List<Vector3Int> path = PathFinding.FindPath(new Vector3Int(0, 0, 0), new Vector3Int(2, 100, 0));
+        foreach (var pos in path) {
+            //Tree.Create(_grid.CellToWorld(new Vector3Int(pos.x, 0, pos.y)) + Vector3.up * Terrain.Instance.GetWorldHeight(new Vector3(pos.x, 0, pos.y)));
         }
-	}
+    }
 	
 	// Update is called once per frame
 	void Update () {
