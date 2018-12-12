@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class Terrain : MonoBehaviour, IRegeneratable {
     #region SINGLETON PATTERN
@@ -20,6 +22,9 @@ public class Terrain : MonoBehaviour, IRegeneratable {
     public enum TerrainType { Land, Water, Mountain };
     private float[,] _terrainHeights;
     private TerrainType[,] _terrainTypes;
+    private Grid _grid;
+    public Dictionary<Vector2Int, List<GameObject>> GridContents = new Dictionary<Vector2Int, List<GameObject>>();
+    private List<Tree> _trees = new List<Tree>();
 
     private int _height = 10;
     private float _scale = 5f;
@@ -28,6 +33,7 @@ public class Terrain : MonoBehaviour, IRegeneratable {
 
 	// Use this for initialization
 	void Start() {
+	    _grid = GameObject.FindObjectOfType<Grid>();
         GameManager.Instance.RegisterRegeneratable(this);
 	}
 
@@ -163,6 +169,10 @@ public class Terrain : MonoBehaviour, IRegeneratable {
         return _terrainHeights[pos.x, pos.y];
     }
 
+    public Grid GetGrid() {
+        return _grid;
+    }
+
     public List<Vector3Int> GetAdjacentSquares(Vector3Int pos) {
         List<Vector3Int> ret = new List<Vector3Int>();
         ret.Add(pos + Vector3Int.down);
@@ -171,5 +181,35 @@ public class Terrain : MonoBehaviour, IRegeneratable {
         ret.Add(pos + Vector3Int.left);
 
         return ret;
+    }
+
+
+    public void RegisterObject(GameObject obj, Vector2Int pos) {
+        if (!GridContents.ContainsKey(pos)) {
+            GridContents.Add(pos, new List<GameObject>());
+        }
+
+        if (obj.GetComponent<Tree>() != null) {
+            _trees.Add(obj.GetComponent<Tree>());
+        }
+
+        GridContents[pos].Add(obj);
+    }
+
+    public Tree GetNearestTree(Vector2Int pos) {
+        Tree nearest = null;
+        int nearest_distance = Int32.MaxValue;
+
+        foreach (Tree tree in _trees) {
+            if (tree.targeted) continue;
+            
+            if (Helper.ManhattanDistance(pos, tree.pos) < nearest_distance) {
+                nearest = tree;
+                tree.SetTargeted(true);
+                nearest_distance = Helper.ManhattanDistance(pos, tree.pos);
+            }
+        }
+
+        return nearest;
     }
 }

@@ -149,4 +149,9 @@ public class PathFinding {
             return null;
         }
     }
+
+    public static List<Vector3Int> FindPath(Vector2Int startPos, Vector2Int destPos,
+        List<Vector3Int> AdditionalNonWalkableSquares = null) {
+        return FindPath(new Vector3Int(startPos.x, startPos.y, 0), new Vector3Int(destPos.x, destPos.y, 0), AdditionalNonWalkableSquares);
+    }
 }

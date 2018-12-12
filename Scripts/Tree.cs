@@ -2,13 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Tree : MonoBehaviour, IColored, IRegeneratable {
+public class Tree : Structure, IColored, IRegeneratable, IObjective {
     private GameObject _body;
     private List<GameObject> _branches = new List<GameObject>();
+    public Vector2Int pos;
+    public bool targeted = false;
 
 
     // Use this for initialization
-    void Start () {
+    override public void Start () {
+        base.Start();
+        transform.position = Terrain.Instance.GetGrid().CellToWorld(new Vector3Int(pos.x, 0, pos.y)) + Vector3.up * Terrain.Instance.GetWorldHeight(new Vector3(pos.x, 0, pos.y));
         Regenerate();
     }
 	
@@ -35,7 +39,7 @@ public class Tree : MonoBehaviour, IColored, IRegeneratable {
         _body.transform.localScale = new Vector3(bodyDiameter, bodyDiameter, bodyHeigth * cone.transform.localScale.z);
 
         // Spawn branches on tree
-        int branchAmount = Random.Range(30, 200);
+        int branchAmount = Random.Range(10, 60);
         float averageBranchLength = Random.Range(0.1f, 1.5f);
         float averageBranchDiameter = Random.Range(0.05f, 0.5f);
         float averageBranchInclination = Random.Range(0, 60f);
@@ -79,12 +83,22 @@ public class Tree : MonoBehaviour, IColored, IRegeneratable {
         }
     }
 
-    public static void Create(Vector3 pos) {
+    public static void Create(Vector2Int pos) {
         GameObject newTree = new GameObject();
         newTree.transform.name = "Tree";
-        newTree.transform.position = pos;
-        newTree.AddComponent<Tree>();
+        Tree t = newTree.AddComponent<Tree>();
+        t.pos = pos;
         GameManager.Instance.RegisterColored(newTree.GetComponent<Tree>());
         GameManager.Instance.RegisterRegeneratable(newTree.GetComponent<Tree>());
+
+        Terrain.Instance.RegisterObject(newTree, pos);
+    }
+
+    public bool IsTargeted() {
+        return targeted;
+    }
+
+    public void SetTargeted(bool s) {
+        targeted = s;
     }
 }

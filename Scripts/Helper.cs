@@ -20,4 +20,8 @@ public class Helper {
     public static int ManhattanDistance(Vector3Int a, Vector3Int b) {
         return Mathf.Abs(b.x - a.x) + Mathf.Abs(b.y - a.y);
     }
+
+    public static int ManhattanDistance(Vector2Int a, Vector2Int b) {
+        return Mathf.Abs(b.x - a.x) + Mathf.Abs(b.y - a.y);
+    }
 }

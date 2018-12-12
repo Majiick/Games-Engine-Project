@@ -24,22 +24,35 @@ public class GameManager : MonoBehaviour {
 
     private List<IColored> _coloreds = new List<IColored>();
     private List<IRegeneratable> _regeneratables = new List<IRegeneratable>();
-    private Grid _grid;
+    private Village _village;
 
     // Use this for initialization
     void Start () {
 		//Villager.Create();
-        _grid = GameObject.FindObjectOfType<Grid>();
-
+        
         Terrain.Instance.Regenerate();
 
-        Invoke("tst", 3.0f);
+        Vector2Int villagePos;
+        do {
+            villagePos = new Vector2Int(Random.Range(0, LENGTH), Random.Range(0, WIDTH));
+        } while (Terrain.Instance.GetTerrainType(villagePos) == global::Terrain.TerrainType.Land);
+
+        _village = Village.Create(villagePos);
+
+        // Spawn trees
+        for (int x = 0; x < LENGTH; x++) {
+            for (int y = 0; y < WIDTH; y++) {
+                if (Terrain.Instance.GetTerrainType(new Vector2Int(y, x)) == Terrain.TerrainType.Land && Random.Range(0.0f, 100f) > 99.7f) {
+                    Tree.Create(new Vector2Int(x, y));
+                }
+            }
+        }
     }
 
     void tst() {
         List<Vector3Int> path = PathFinding.FindPath(new Vector3Int(0, 0, 0), new Vector3Int(2, 100, 0));
         foreach (var pos in path) {
-            //Tree.Create(_grid.CellToWorld(new Vector3Int(pos.x, 0, pos.y)) + Vector3.up * Terrain.Instance.GetWorldHeight(new Vector3(pos.x, 0, pos.y)));
+            Tree.Create(new Vector2Int(pos.x, pos.y));
         }
     }
 	
