@@ -7,6 +7,7 @@ public class Tree : Structure, IColored, IRegeneratable, IObjective {
     private List<GameObject> _branches = new List<GameObject>();
     public Vector2Int pos;
     public bool targeted = false;
+    private int uses = 50;
 
 
     // Use this for initialization
@@ -35,6 +36,7 @@ public class Tree : Structure, IColored, IRegeneratable, IObjective {
 
         // Choose random size for tree
         float bodyDiameter = Random.Range(1.0f, 3f);
+        transform.localScale = new Vector3(1.0f / bodyDiameter, 1.0f, 1.0f / bodyDiameter);
         float bodyHeigth = Random.Range(2.0f, 5f) / cone.transform.localScale.z;
         _body.transform.localScale = new Vector3(bodyDiameter, bodyDiameter, bodyHeigth * cone.transform.localScale.z);
 
@@ -100,5 +102,14 @@ public class Tree : Structure, IColored, IRegeneratable, IObjective {
 
     public void SetTargeted(bool s) {
         targeted = s;
+    }
+
+    public void Use() {
+        uses--;
+        SetTargeted(false);
+        if (uses == 0) {
+            Terrain.Instance.UnregisterObject(gameObject, pos);
+            Destroy(gameObject);
+        }
     }
 }

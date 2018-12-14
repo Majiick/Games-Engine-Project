@@ -5,4 +5,5 @@ using UnityEngine;
 public interface IObjective {
     bool IsTargeted();
     void SetTargeted(bool s);
+    void Use();
 }

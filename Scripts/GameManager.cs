@@ -24,7 +24,10 @@ public class GameManager : MonoBehaviour {
 
     private List<IColored> _coloreds = new List<IColored>();
     private List<IRegeneratable> _regeneratables = new List<IRegeneratable>();
-    private Village _village;
+    public List<Village> _villages;
+
+    [Range(1f, 50f)]
+    public float speed = 1.0f;
 
     // Use this for initialization
     void Start () {
@@ -32,13 +35,15 @@ public class GameManager : MonoBehaviour {
         
         Terrain.Instance.Regenerate();
 
-        Vector2Int villagePos;
-        do {
-            villagePos = new Vector2Int(Random.Range(0, LENGTH), Random.Range(0, WIDTH));
-        } while (Terrain.Instance.GetTerrainType(villagePos) == global::Terrain.TerrainType.Land);
+        for (int i = 0; i < 2; i++) {
+            Vector2Int villagePos;
+            do {
+                villagePos = new Vector2Int(Random.Range(0, LENGTH), Random.Range(0, WIDTH));
+            } while (Terrain.Instance.GetTerrainType(villagePos) == global::Terrain.TerrainType.Land);
 
-        _village = Village.Create(villagePos);
-
+            _villages.Add(Village.Create(villagePos));
+        }
+        
         // Spawn trees
         for (int x = 0; x < LENGTH; x++) {
             for (int y = 0; y < WIDTH; y++) {
@@ -46,6 +51,12 @@ public class GameManager : MonoBehaviour {
                     Tree.Create(new Vector2Int(x, y));
                 }
             }
+        }
+
+        StartCoroutine("SpawnFood");
+
+        for (int i = 0; i < 20; i++) {
+            SpawnFood();
         }
     }
 
@@ -55,10 +66,24 @@ public class GameManager : MonoBehaviour {
             Tree.Create(new Vector2Int(pos.x, pos.y));
         }
     }
+
+    IEnumerator SpawnFood() {
+        while (true) {
+            Vector2Int randomPos;
+            do {
+                randomPos = new Vector2Int(Random.Range(0, WIDTH - 1), Random.Range(0, LENGTH - 1));
+            } while (Terrain.Instance.GetTerrainType(new Vector2Int(randomPos.y, randomPos.x)) != Terrain.TerrainType.Land);
+
+            Food.Create(randomPos);
+            yield return new WaitForSeconds(4f);
+        }
+    }
 	
 	// Update is called once per frame
 	void Update () {
-	    if (Input.GetKeyDown(KeyCode.C)) {
+	    Time.timeScale = speed;
+
+        if (Input.GetKeyDown(KeyCode.C)) {
 	        ColorScheme.NewColors();
 
             foreach (var colored in _coloreds) {

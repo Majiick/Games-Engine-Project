@@ -22,9 +22,11 @@ public class Terrain : MonoBehaviour, IRegeneratable {
     public enum TerrainType { Land, Water, Mountain };
     private float[,] _terrainHeights;
     private TerrainType[,] _terrainTypes;
+    public float[,] Roads;
     private Grid _grid;
     public Dictionary<Vector2Int, List<GameObject>> GridContents = new Dictionary<Vector2Int, List<GameObject>>();
     private List<Tree> _trees = new List<Tree>();
+    private List<Food> _foods = new List<Food>();
 
     private int _height = 10;
     private float _scale = 5f;
@@ -35,7 +37,8 @@ public class Terrain : MonoBehaviour, IRegeneratable {
 	void Start() {
 	    _grid = GameObject.FindObjectOfType<Grid>();
         GameManager.Instance.RegisterRegeneratable(this);
-	}
+	    StartCoroutine("DrawRoads");
+    }
 
     void Update() {
         
@@ -44,6 +47,7 @@ public class Terrain : MonoBehaviour, IRegeneratable {
     public void Regenerate() {
         int width = GameManager.WIDTH;
         int length = GameManager.LENGTH;
+        Roads = new float[width,length];
 
         _offsetx = Random.Range(0, 1000000f);
         _offsety = Random.Range(0, 1000000f);
@@ -128,6 +132,35 @@ public class Terrain : MonoBehaviour, IRegeneratable {
         t.terrainData.SetHeights(0, 0, _terrainHeights);
     }
 
+    IEnumerator DrawRoads() {
+        yield return new WaitForSeconds(3f);
+        UnityEngine.Terrain t = GetComponent<UnityEngine.Terrain>();
+        Texture2D texture = t.terrainData.splatPrototypes[0].texture;
+
+        while (true) {
+            for (int x = 0; x < GameManager.WIDTH; x++) {
+                for (int y = 0; y < GameManager.LENGTH; y++) {
+//                    texture.SetPixel(y, x, texture.GetPixel(y, x) + (Color.black * Roads[x, y]));
+                    if (Roads[x, y] > 0) {
+                        float h, s, v;
+                        Color.RGBToHSV(texture.GetPixel(x, y), out h, out s, out v);
+                        Color c = Color.HSVToRGB(h, s, 1.0f-Roads[x, y]);
+                        texture.SetPixel(x, y, c);
+                    }
+                }
+            }
+
+            SplatPrototype splat = new SplatPrototype();
+            splat.texture = texture;
+            splat.tileOffset = new Vector2(0, 0);
+            splat.tileSize = new Vector2(GameManager.WIDTH, GameManager.LENGTH);
+            splat.texture.Apply(true);
+            t.terrainData.splatPrototypes = new SplatPrototype[] { splat };
+
+            yield return new WaitForSeconds(1f);
+        }
+    }
+
     float[,] SmoothOutTransitions(float[,] heights, bool[,] mask=null) {
         float[,] newHeights = (float[,])heights.Clone();
         int kernelSize = 3;
@@ -175,12 +208,39 @@ public class Terrain : MonoBehaviour, IRegeneratable {
 
     public List<Vector3Int> GetAdjacentSquares(Vector3Int pos) {
         List<Vector3Int> ret = new List<Vector3Int>();
-        ret.Add(pos + Vector3Int.down);
-        ret.Add(pos + Vector3Int.up);
-        ret.Add(pos + Vector3Int.right);
-        ret.Add(pos + Vector3Int.left);
+
+        if (pos.y - 1 >= 0) {
+            ret.Add(pos + Vector3Int.down);
+        }
+
+        if (GameManager.LENGTH > pos.y + 1) {
+            ret.Add(pos + Vector3Int.up);
+        }
+
+        if (GameManager.WIDTH > pos.x + 1) {
+            ret.Add(pos + Vector3Int.right);
+        }
+
+        if (pos.x - 1 >= 0) {
+            ret.Add(pos + Vector3Int.left);
+        }
 
         return ret;
+    }
+
+    public void UnregisterObject(GameObject obj, Vector2Int pos) {
+        if (obj.GetComponent<Tree>() != null) {
+            _trees.Remove(obj.GetComponent<Tree>());
+        }
+
+        if (obj.GetComponent<Food>() != null) {
+            _foods.Remove(obj.GetComponent<Food>());
+        }
+
+        GridContents[pos].Remove(obj);
+        if (GridContents[pos].Count == 0) {
+            GridContents.Remove(pos);
+        }
     }
 
 
@@ -193,6 +253,10 @@ public class Terrain : MonoBehaviour, IRegeneratable {
             _trees.Add(obj.GetComponent<Tree>());
         }
 
+        if (obj.GetComponent<Food>() != null) {
+            _foods.Add(obj.GetComponent<Food>());
+        }
+
         GridContents[pos].Add(obj);
     }
 
@@ -201,12 +265,29 @@ public class Terrain : MonoBehaviour, IRegeneratable {
         int nearest_distance = Int32.MaxValue;
 
         foreach (Tree tree in _trees) {
-            if (tree.targeted) continue;
+            if (tree.IsTargeted()) continue;
             
             if (Helper.ManhattanDistance(pos, tree.pos) < nearest_distance) {
                 nearest = tree;
                 tree.SetTargeted(true);
                 nearest_distance = Helper.ManhattanDistance(pos, tree.pos);
+            }
+        }
+
+        return nearest;
+    }
+
+    public Food GetNearestFood(Vector2Int pos) {
+        Food nearest = null;
+        int nearest_distance = Int32.MaxValue;
+
+        foreach (Food food in _foods) {
+            if (food.IsTargeted()) continue;
+
+            if (Helper.ManhattanDistance(pos, food.pos) < nearest_distance) {
+                nearest = food;
+                food.SetTargeted(true);
+                nearest_distance = Helper.ManhattanDistance(pos, food.pos);
             }
         }
 

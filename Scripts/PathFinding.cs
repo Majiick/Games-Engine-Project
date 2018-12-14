@@ -19,6 +19,27 @@ public class PathFinding {
             }
 
             this.G = parent != null ? parent.G + 1 : 0; // 0 If starting position.
+            if (parent != null) {
+//                Debug.LogWarning(new Vector2Int(parent.pos.x, parent.pos.y));
+                this.G += Mathf.Abs(Terrain.Instance.GetHeight(new Vector2Int(parent.pos.x, parent.pos.y)) - Terrain.Instance.GetHeight(new Vector2Int(pos.x, pos.y))); // Add height difference between parent square and this square to the difficulty
+            }
+
+            // Apply road bonus to it
+            
+            this.G -= Terrain.Instance.Roads[pos.x, pos.y];
+            if (Terrain.Instance.Roads[pos.x, pos.y] > 0) {
+//                Debug.Log(this.G);
+            }
+
+            // Add terrain type difficulty
+            if (Terrain.Instance.GetTerrainType(new Vector2Int(pos.y, pos.x)) == Terrain.TerrainType.Mountain) {
+                this.G += 100;
+            }
+
+            if (Terrain.Instance.GetTerrainType(new Vector2Int(pos.y, pos.x)) == Terrain.TerrainType.Water) {
+                this.G += 120;
+            }
+
             this.pos = pos;
             //this.H = Helper.ManhattanDistance(pos, destPos);
             this.H = 0;
@@ -131,7 +152,7 @@ public class PathFinding {
 
         } while (openList.Count != 0);
 
-        Debug.Log(its);
+//        Debug.Log(its);
 
         if (pathFound) {
             // Reconstruct path.

@@ -19,14 +19,16 @@ public class Village : Structure {
 
 	    _model.GetComponent<Renderer>().material.color = Color.red;
 
-	    Villager.Create(pos + Vector2Int.down);
-//	    Villager.Create(pos + Vector2Int.up);
-//	    Villager.Create(pos + Vector2Int.right);
-//	    Villager.Create(pos + Vector2Int.left);
-//	    Villager.Create(pos + Vector2Int.left + Vector2Int.up);
-//	    Villager.Create(pos + Vector2Int.right + Vector2Int.up);
-//	    Villager.Create(pos + Vector2Int.left + Vector2Int.down);
-//	    Villager.Create(pos + Vector2Int.right + Vector2Int.down);
+	    Villager.Create(pos + Vector2Int.down, this);
+	    Villager.Create(pos + Vector2Int.up, this);
+	    Villager.Create(pos + Vector2Int.right, this);
+	    Villager.Create(pos + Vector2Int.left, this);
+	    Villager.Create(pos + Vector2Int.left + Vector2Int.up, this);
+	    Villager.Create(pos + Vector2Int.right + Vector2Int.up, this);
+	    Villager.Create(pos + Vector2Int.left + Vector2Int.down, this);
+	    Villager.Create(pos + Vector2Int.right + Vector2Int.down, this);
+
+
     }
 	
 	// Update is called once per frame
